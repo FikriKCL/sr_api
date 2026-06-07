@@ -7,9 +7,6 @@ use Illuminate\Http\Request;
 
 class ReservationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
      {
          return Reservation::with([
@@ -50,8 +47,17 @@ class ReservationController extends Controller
             ->exists();
 
         if ($conflict) {
+            $court = Court::with('location')->findOrFail($validated['court_id']);
+
+            $recommendedSlots = $this->getRecommendedSlots(
+                $court,
+                $validated['reservation_date'],
+                $validated['duration'] ?? 2
+            );
+
             return response()->json([
-                'message' => 'Jadwal sudah dibooking pada waktu tersebut.'
+                'message' => 'Jadwal sudah dibooking pada waktu tersebut.',
+                'recommended_slots' => $recommendedSlots
             ], 409);
         }
 
@@ -70,6 +76,45 @@ class ReservationController extends Controller
             'message' => 'Reservation berhasil dibuat.',
             'data' => $reservation
         ], 201);
+    }
+
+    private function getRecommendedSlots($court, $date, $duration)
+    {
+        $openHour = strtotime($court->location->open_hour);
+        $closeHour = strtotime($court->location->close_hour);
+
+        $existingBookings = Reservation::where('court_id', $court->id)
+            ->where('reservation_date', $date)
+            ->whereIn('status', ['pending', 'approved'])
+            ->get();
+
+        $recommendedSlots = [];
+            for (
+                $time = $openHour;
+                $time + ($duration * 3600) <= $closeHour;
+                $time += 3600
+            ) {
+            $start = date('H:i:s', $time);
+            $end = date('H:i:s', $time + ($duration * 3600));
+
+            $isConflict = $existingBookings->contains(function ($booking) use ($start, $end) {
+                return $booking->start_time < $end &&
+                    $booking->end_time > $start;
+            });
+
+            if (!$isConflict) {
+                $recommendedSlots[] = [
+                    'start_time' => $start,
+                    'end_time' => $end,
+                ];
+            }
+
+            if (count($recommendedSlots) >= 3) {
+                break;
+            }
+        }
+
+        return $recommendedSlots;
     }
 
     public function destroy(Reservation $reservation)
