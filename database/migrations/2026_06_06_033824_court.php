@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('courts', function (Blueprint $table) {
+      Schema::create('courts', function (Blueprint $table) {
         $table->id();
+
         $table->foreignId('location_id')
             ->constrained('franchise_locations')
             ->cascadeOnDelete()
@@ -20,8 +21,20 @@ return new class extends Migration
 
         $table->string('court_name', 50);
         $table->string('court_type', 50);
+
         $table->integer('price_per_hour');
-        $table->enum('status', ['active', 'inactive'])->default('active');
+
+        $table->string('picture')->nullable();
+
+        $table->decimal('rating', 2, 1)->default(0.0);
+
+        $table->text('description')->nullable();
+
+        $table->enum('status', [
+            'active',
+            'inactive'
+        ])->default('active');
+
         $table->timestamps();
     });
     }

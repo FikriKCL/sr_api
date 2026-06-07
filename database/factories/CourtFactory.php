@@ -2,32 +2,44 @@
 
 namespace Database\Factories;
 
-use App\Models\Courts;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Court;
 use App\Models\FranchiseLocation;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends Factory<Courts>
- */
 class CourtFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-  public function definition(): array
+    protected $model = Court::class;
+
+    public function definition(): array
     {
         return [
             'location_id' => FranchiseLocation::factory(),
-            'court_name' => 'Court '.fake()->numberBetween(1, 20),
-            'court_type' => fake()->randomElement([
-                'Padel'
-            ]),
-            'price_per_hour' => fake()->numberBetween(
-                50000,
-                200000
+
+            'court_name' => 'Court '.$this->faker->numberBetween(1, 20),
+
+            'court_type' => 'Padel',
+
+            'price_per_hour' => $this->faker->numberBetween(
+                100000,
+                300000
             ),
+
+            'picture' => $this->faker->randomElement([
+                'courts/court1.jpg',
+                'courts/court2.jpg',
+                'courts/court3.jpg',
+                'courts/court4.jpg',
+                'courts/court5.jpg',
+            ]),
+
+            'rating' => $this->faker->randomFloat(
+                1,
+                4.0,
+                5.0
+            ),
+
+            'description' => $this->faker->sentence(15),
+
             'status' => 'active',
         ];
     }

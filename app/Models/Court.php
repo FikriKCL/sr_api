@@ -14,7 +14,10 @@ class Court extends Model
         'court_name',
         'court_type',
         'price_per_hour',
-        'status'
+        'picture',
+        'rating',
+        'description',
+        'status',
     ];
 
     public function location()
