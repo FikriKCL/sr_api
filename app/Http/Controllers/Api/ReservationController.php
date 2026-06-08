@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Court;
 use App\Models\Reservation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReservationController extends Controller
 {
@@ -40,14 +41,19 @@ class ReservationController extends Controller
     /**
      * POST /reservations
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-    'court_id'         => 'required|exists:courts,id',
-    'reservation_date' => 'required|date',
-    'start_time'       => 'required|date_format:H:i',
-    'end_time'         => 'required|date_format:H:i|after:start_time',
-]);
+   public function store(Request $request)
+{
+    $validated = $request->validate([
+        'court_id'         => 'required|exists:courts,id',
+        'reservation_date' => 'required|date',
+        'start_time'       => 'required|date_format:H:i',
+        'end_time'         => 'required|date_format:H:i|after:start_time',
+    ]);
+
+    return DB::transaction(function () use ($validated) {
+        $court = Court::with('location')
+            ->lockForUpdate()
+            ->findOrFail($validated['court_id']);
 
         $conflict = Reservation::where('court_id', $validated['court_id'])
             ->where('reservation_date', $validated['reservation_date'])
@@ -56,47 +62,46 @@ class ReservationController extends Controller
                 $query->where('start_time', '<', $validated['end_time'])
                       ->where('end_time', '>', $validated['start_time']);
             })
+            ->lockForUpdate()
             ->exists();
 
+        $duration = $this->calculateDuration(
+            $validated['start_time'],
+            $validated['end_time']
+        );
+
         if ($conflict) {
-            $court = Court::with('location')->findOrFail($validated['court_id']);
-
-            $recommendedSlots = $this->getRecommendedSlots(
-                $court,
-                $validated['reservation_date'],
-                2
-            );
-
             return response()->json([
-                'message'           => 'Jadwal sudah dibooking pada waktu tersebut.',
-                'recommended_slots' => $recommendedSlots,
+                'success' => false,
+                'message' => 'Jadwal sudah dibooking pada waktu tersebut.',
+                'recommended_slots' => $this->getRecommendedSlots(
+                    $court,
+                    $validated['reservation_date'],
+                    $duration
+                ),
             ], 409);
         }
 
-        // Calculate total price
-        $court      = Court::findOrFail($validated['court_id']);
-        $startHour  = (int) explode(':', $validated['start_time'])[0];
-        $endHour    = (int) explode(':', $validated['end_time'])[0];
-        $duration   = max(1, $endHour - $startHour);
         $totalPrice = $court->price_per_hour * $duration;
 
-$reservation = Reservation::create([
-    'user_id'          => auth()->id(),
-    'court_id'         => $validated['court_id'],
-    'reservation_date' => $validated['reservation_date'],
-    'start_time'       => $validated['start_time'],
-    'end_time'         => $validated['end_time'],
-    'duration'         => $duration,
-    'total_price'      => $totalPrice,
-    'status'           => 'pending',
-]);
+        $reservation = Reservation::create([
+            'user_id'          => auth()->id(),
+            'court_id'         => $validated['court_id'],
+            'reservation_date' => $validated['reservation_date'],
+            'start_time'       => $validated['start_time'],
+            'end_time'         => $validated['end_time'],
+            'duration'         => $duration,
+            'total_price'      => $totalPrice,
+            'status'           => 'pending',
+        ]);
 
         return response()->json([
+            'success' => true,
             'message' => 'Reservation berhasil dibuat.',
-            'data'    => $reservation->load('court.location'),
+            'data' => $reservation->load('court.location'),
         ], 201);
-    }
-
+    });
+}
     /**
      * DELETE /reservations/{reservation} — cancel a reservation
      */
@@ -150,4 +155,12 @@ public function destroy(Reservation $reservation)
 
         return $recommendedSlots;
     }
+
+        private function calculateDuration($startTime, $endTime)
+        {
+            $start = strtotime($startTime);
+            $end = strtotime($endTime);
+
+            return max(1, ($end - $start) / 3600);
+        }
 }
