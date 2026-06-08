@@ -18,16 +18,16 @@ class DatabaseSeeder extends Seeder
 
         Court::factory(10)->create();
 
-        User::factory(50)->create();
+        User::factory(10)->create();
 
-        Reservation::factory(100)->create();
+        Reservation::factory(10)->create();
 
         $this->call([
             PaymentOptionSeeder::class,
         ]);
 
-        Payment::factory(100)->create();
+        Payment::factory(10)->create();
 
-        WaitingList::factory(50)->create();
+        WaitingList::factory(10)->create();
     }
 }
