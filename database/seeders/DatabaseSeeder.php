@@ -14,13 +14,17 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        FranchiseLocation::factory(2)->create();
-
-        Court::factory(10)->create();
+        FranchiseLocation::factory()
+            ->count(10)
+            ->has(Court::factory()->count(4), 'courts')
+            ->create();
 
         User::factory(10)->create();
 
-        Reservation::factory(10)->create();
+        Reservation::factory()
+            ->count(10)
+            ->existingRelations()
+            ->create();
 
         $this->call([
             PaymentOptionSeeder::class,
@@ -30,5 +34,8 @@ class DatabaseSeeder extends Seeder
         Payment::factory(10)->create();
 
         WaitingList::factory(10)->create();
+
+
+        
     }
 }
