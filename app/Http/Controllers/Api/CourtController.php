@@ -6,19 +6,51 @@ use App\Http\Controllers\Controller;
 use App\Models\Court;
 use App\Models\Reservation;
 use Illuminate\Http\Request;
+use App\Models\FranchiseLocation;
 
 class CourtController extends Controller
 {
-    public function index()
-    {
-        $courts = Court::with('location')
-            ->where('status', 'active')
-            ->get();
+    public function index(Request $request)
+{
+    $user = $request->user();
 
-        return response()->json([
-            'data' => $courts
-        ]);
+    if ($user &&
+        $user->latitude &&
+        $user->longitude) {
+
+        $courts = Court::with('location')
+            ->selectRaw("
+                courts.*,
+                (
+                    6371 * acos(
+                        cos(radians(?))
+                        * cos(radians(franchise_locations.latitude))
+                        * cos(
+                            radians(franchise_locations.longitude)
+                            - radians(?)
+                        )
+                        + sin(radians(?))
+                        * sin(radians(franchise_locations.latitude))
+                    )
+                ) AS distance
+            ", [
+                $user->latitude,
+                $user->longitude,
+                $user->latitude
+            ])
+            ->join(
+                'franchise_locations',
+                'courts.location_id',
+                '=',
+                'franchise_locations.id'
+            )
+            ->get();
+    } else {
+        $courts = Court::with('location')->get();
     }
+
+    return response()->json($courts);
+}
 
     public function show(Court $court)
     {
@@ -26,6 +58,69 @@ class CourtController extends Controller
             'data' => $court->load('location')
         ]);
     }
+
+    public function nearest(Request $request)
+{
+
+// \Log::info('NEAREST API CALLED');
+
+    $user = $request->user();
+
+    $lat = $user->latitude;
+    $lng = $user->longitude;
+
+    $courts = Court::with('location')
+        ->selectRaw("
+            courts.*,
+            (
+                6371 * acos(
+                    cos(radians(?))
+                    * cos(radians(franchise_locations.latitude))
+                    * cos(
+                        radians(franchise_locations.longitude)
+                        - radians(?)
+                    )
+                    + sin(radians(?))
+                    * sin(radians(franchise_locations.latitude))
+                )
+            ) AS distance
+        ", [$lat, $lng, $lat])
+        ->join(
+            'franchise_locations',
+            'courts.location_id',
+            '=',
+            'franchise_locations.id'
+        )
+        ->orderBy('distance')
+        ->get();
+
+    // DEBUG
+    foreach ($courts as $court) {
+        \Log::info('COURT DISTANCE', [
+            'court' => $court->court_name,
+            'distance' => $court->distance,
+        ]);
+    }
+
+    return response()->json($courts);
+}
+
+public function locations()
+{
+    return response()->json(
+        FranchiseLocation::withCount('courts')->get()
+    );
+}
+
+public function courtsByLocation($id)
+{
+    $courts = Court::with('location')
+        ->where('location_id', $id)
+        ->get();
+
+    return response()->json($courts);
+}
+
 
     public function availableSlots(Court $court, Request $request)
     {
@@ -64,6 +159,8 @@ class CourtController extends Controller
                 'available' => !$isBooked,
             ];
         }
+
+        
 
         return response()->json([
             'data' => $slots

@@ -53,6 +53,24 @@ class AuthController extends Controller
         ]);
     }
 
+    public function updateLocation(Request $request)
+{
+    $request->validate([
+        'latitude' => 'required|numeric',
+        'longitude' => 'required|numeric',
+    ]);
+
+    $user = $request->user();
+
+    $user->latitude = $request->latitude;
+    $user->longitude = $request->longitude;
+    $user->save();
+
+    return response()->json([
+        'message' => 'Location updated'
+    ]);
+}
+
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
