@@ -100,14 +100,22 @@ $reservation = Reservation::create([
     /**
      * DELETE /reservations/{reservation} — cancel a reservation
      */
-    public function destroy(Reservation $reservation)
-    {
-        $this->authorize('delete', $reservation);
+public function destroy(Reservation $reservation)
+{
+    \Log::info('DELETE RESERVATION', [
+        'auth_id' => auth()->id(),
+        'reservation_user_id' => $reservation->user_id,
+        'reservation_id' => $reservation->id,
+    ]);
 
-        $reservation->update(['status' => 'cancelled']);
+    $reservation->update([
+        'status' => 'cancelled'
+    ]);
 
-        return response()->json(['message' => 'Reservation cancelled']);
-    }
+    return response()->json([
+        'message' => 'Reservation cancelled'
+    ]);
+}
 
     // ── Private helpers ────────────────────────────────────────────────────────
 
