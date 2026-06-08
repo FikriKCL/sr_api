@@ -13,8 +13,7 @@ class CourtFactory extends Factory
     public function definition(): array
     {
         return [
-            'location_id' => FranchiseLocation::factory(),
-
+            'location_id' => FranchiseLocation::inRandomOrder()->value('id') ?? FranchiseLocation::factory(),
             'court_name' => 'Court '.$this->faker->numberBetween(1, 20),
 
             'court_type' => 'Padel',
