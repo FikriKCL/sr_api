@@ -13,14 +13,19 @@ class ReservationController extends Controller
      * GET /reservations — list reservations for the authenticated user
      */
     public function index()
-    {
-        return response()->json(
-            Reservation::with(['court.location', 'payment'])
-                ->where('user_id', auth()->id())
-                ->latest()
-                ->get()
-        );
-    }
+{
+    \Log::info('AUTH USER', [
+        'id' => auth()->id(),
+        'user' => auth()->user()
+    ]);
+
+    return response()->json(
+        Reservation::with(['court.location', 'payment'])
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->get()
+    );
+}
 
     /**
      * GET /reservations/{reservation}
@@ -38,12 +43,11 @@ class ReservationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id'          => 'required|exists:users,id',
-            'court_id'         => 'required|exists:courts,id',
-            'reservation_date' => 'required|date',
-            'start_time'       => 'required|date_format:H:i',
-            'end_time'         => 'required|date_format:H:i|after:start_time',
-        ]);
+    'court_id'         => 'required|exists:courts,id',
+    'reservation_date' => 'required|date',
+    'start_time'       => 'required|date_format:H:i',
+    'end_time'         => 'required|date_format:H:i|after:start_time',
+]);
 
         $conflict = Reservation::where('court_id', $validated['court_id'])
             ->where('reservation_date', $validated['reservation_date'])
@@ -76,16 +80,16 @@ class ReservationController extends Controller
         $duration   = max(1, $endHour - $startHour);
         $totalPrice = $court->price_per_hour * $duration;
 
-        $reservation = Reservation::create([
-            'user_id'          => $validated['user_id'],
-            'court_id'         => $validated['court_id'],
-            'reservation_date' => $validated['reservation_date'],
-            'start_time'       => $validated['start_time'],
-            'end_time'         => $validated['end_time'],
-            'duration'         => $duration,
-            'total_price'      => $totalPrice,
-            'status'           => 'pending',
-        ]);
+$reservation = Reservation::create([
+    'user_id'          => auth()->id(),
+    'court_id'         => $validated['court_id'],
+    'reservation_date' => $validated['reservation_date'],
+    'start_time'       => $validated['start_time'],
+    'end_time'         => $validated['end_time'],
+    'duration'         => $duration,
+    'total_price'      => $totalPrice,
+    'status'           => 'pending',
+]);
 
         return response()->json([
             'message' => 'Reservation berhasil dibuat.',
