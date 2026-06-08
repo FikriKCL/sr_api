@@ -2,47 +2,44 @@
 
 namespace Database\Factories;
 
-use App\Models\Payment;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\PaymentOption;
 use App\Models\Reservation;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
-/**
- * @extends Factory<Payment>
- */
 class PaymentFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-        public function definition(): array
-        {
-            return [
-                'reservation_id' => Reservation::factory(),
+    public function definition(): array
+    {
+        return [
+            'reservation_id' =>
+                Reservation::factory(),
 
-                'payment_method' => fake()->randomElement([
-                    'Transfer',
-                    'OVO',
-                    'GoPay',
-                    'Dana',
-                    'Credit Card'
-                ]),
+            'payment_option_id' =>
+                PaymentOption::query()
+                    ->inRandomOrder()
+                    ->value('id'),
 
-                'amount' => fake()->numberBetween(
-                    100000,
-                    400000
+            'amount' =>
+                fake()->numberBetween(
+                    50000,
+                    500000
                 ),
 
-                'status' => fake()->randomElement([
-                    'paid',
+            'status' =>
+                fake()->randomElement([
                     'pending',
-                    'failed'
+                    'paid',
+                    'failed',
                 ]),
 
-                'transaction_id' => fake()->uuid(),
+            'transaction_id' =>
+                'TRX-' . strtoupper(
+                    Str::random(12)
+                ),
 
-                'paid_at' => now(),
-            ];
-        }
+            'paid_at' =>
+                fake()->optional()->dateTime(),
+        ];
+    }
 }

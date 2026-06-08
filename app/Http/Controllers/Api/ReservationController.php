@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Court;
+use App\Models\Reservation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
@@ -27,14 +29,14 @@ class ReservationController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+ public function store(Request $request)
     {
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'court_id' => 'required|exists:courts,id',
             'reservation_date' => 'required|date',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
+            'start_time' => 'required|date_format:H:i:s',
+            'end_time' => 'required|date_format:H:i:s|after:start_time',
         ]);
 
         $conflict = Reservation::where('court_id', $validated['court_id'])
@@ -47,19 +49,12 @@ class ReservationController extends Controller
             ->exists();
 
         if ($conflict) {
-            $court = Court::with('location')->findOrFail($validated['court_id']);
-
-            $recommendedSlots = $this->getRecommendedSlots(
-                $court,
-                $validated['reservation_date'],
-                $validated['duration'] ?? 2
-            );
-
             return response()->json([
-                'message' => 'Jadwal sudah dibooking pada waktu tersebut.',
-                'recommended_slots' => $recommendedSlots
+                'message' => 'Jadwal sudah dibooking pada waktu tersebut.'
             ], 409);
         }
+
+        $court = Court::findOrFail($validated['court_id']);
 
         $reservation = Reservation::create([
             'user_id' => $validated['user_id'],
@@ -67,14 +62,14 @@ class ReservationController extends Controller
             'reservation_date' => $validated['reservation_date'],
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
-            'duration' => 2,
-            'total_price' => 100000,
+            'duration' => 1,
+            'total_price' => $court->price_per_hour,
             'status' => 'pending',
         ]);
 
         return response()->json([
             'message' => 'Reservation berhasil dibuat.',
-            'data' => $reservation
+            'data' => $reservation,
         ], 201);
     }
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\CourtController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PaymentOptionController;
 use App\Http\Controllers\Api\WaitingListController;
 
 // Public routes
@@ -17,6 +18,16 @@ Route::get('/courts', [CourtController::class, 'index']);
 Route::get('/courts/{court}', [CourtController::class, 'show']);
 Route::get('/courts/{court}/available-slots', [CourtController::class, 'availableSlots']);
 
+Route::apiResource('reservations', ReservationController::class);
+Route::post('/reservations', [ReservationController::class, 'store']);
+
+Route::apiResource('payments', PaymentController::class);
+Route::post('/payments', [PaymentController::class, 'store']);
+
+Route::get('/payment-options', [PaymentOptionController::class, 'index']);
+Route::get('/payment-options/{paymentOption}', [PaymentOptionController::class, 'show']);
+
+
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -24,9 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'me']);
     Route::put('/profile', [ProfileController::class, 'updateMe']);
 
-    Route::apiResource('reservations', ReservationController::class);
-    Route::post('/reservations', [ReservationController::class, 'store']);
-    
+
+
     Route::apiResource('payments', PaymentController::class);
     Route::apiResource('waiting-lists', WaitingListController::class);
 });

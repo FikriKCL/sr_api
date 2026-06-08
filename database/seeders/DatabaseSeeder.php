@@ -22,6 +22,10 @@ class DatabaseSeeder extends Seeder
 
         Reservation::factory(100)->create();
 
+        $this->call([
+            PaymentOptionSeeder::class,
+        ]);
+
         Payment::factory(100)->create();
 
         WaitingList::factory(50)->create();

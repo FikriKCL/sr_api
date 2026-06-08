@@ -19,8 +19,10 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
-            $table->string('payment_method', 50); 
-            // contoh: cash, transfer, e_wallet, credit_card
+           $table->foreignId('payment_option_id')
+            ->constrained('payment_options')
+            ->cascadeOnUpdate()
+            ->restrictOnDelete();
 
             $table->integer('amount');
 

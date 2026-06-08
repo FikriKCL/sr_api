@@ -20,13 +20,6 @@ class CourtController extends Controller
         ]);
     }
 
-    public function show(Court $court)
-    {
-        return response()->json([
-            'data' => $court->load('location')
-        ]);
-    }
-
     public function availableSlots(Court $court, Request $request)
     {
         $date = $request->query('date');

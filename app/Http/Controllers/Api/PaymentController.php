@@ -3,44 +3,36 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function store(Request $request)
     {
-        return Payment::with([
-            'reservation.court'
-        ])
-        ->whereHas(
-            'reservation',
-            fn($q) => $q->where(
-                'user_id',
-                auth()->id()
-            )
-        )
-        ->get();
-    }
-
-    public function show(Payment $payment)
-    {
-        return $payment->load([
-            'reservation.court.location'
+        $validated = $request->validate([
+            'reservation_id' => 'required|exists:reservations,id',
+            'payment_method' => 'required|string|max:50',
+            'amount' => 'required|integer|min:0',
         ]);
-    }
 
-    public function pay(Payment $payment)
-    {
-        $payment->update([
-            'status' => 'paid',
-            'paid_at' => now(),
+        $payment = Payment::create([
+            'reservation_id' =>
+                $validated['reservation_id'],
+
+            'payment_option_id' =>
+                $validated['payment_option_id'],
+
+            'amount' =>
+                $validated['amount'],
+
+            'status' => 'pending',
         ]);
 
         return response()->json([
-            'message' => 'Payment successful'
-        ]);
+            'message' => 'Payment created successfully',
+            'data' => $payment,
+        ], 201);
     }
 }
