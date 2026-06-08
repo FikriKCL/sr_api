@@ -37,6 +37,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-    Route::apiResource('payments', PaymentController::class);
     Route::apiResource('waiting-lists', WaitingListController::class);
 });

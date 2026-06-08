@@ -25,11 +25,11 @@ class CourtFactory extends Factory
             ),
 
             'picture' => $this->faker->randomElement([
-                'courts/court1.jpg',
-                'courts/court2.jpg',
-                'courts/court3.jpg',
-                'courts/court4.jpg',
-                'courts/court5.jpg',
+                'courts/court1.jpeg',
+                'courts/court2.jpeg',
+                'courts/court3.jpeg',
+                'courts/court4.jpeg',
+                'courts/court5.jpeg',
             ]),
 
             'rating' => $this->faker->randomFloat(
