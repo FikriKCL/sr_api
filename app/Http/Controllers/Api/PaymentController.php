@@ -9,6 +9,41 @@ use Illuminate\Support\Str;
 
 class PaymentController extends Controller
 {
+    /**
+     * GET /payments — list payments for the authenticated user
+     */
+    public function index()
+    {
+        return response()->json(
+            Payment::with(['reservation.court'])
+                ->whereHas('reservation', fn ($q) => $q->where('user_id', auth()->id()))
+                ->get()
+        );
+    }
+
+    /**
+     * GET /payments/{payment}
+     */
+    public function show(Payment $payment)
+    {
+        return response()->json(
+            $payment->load(['reservation.court.location'])
+        );
+    }
+
+    /**
+     * POST /payments/{payment}/pay — mark a payment as paid
+     */
+    public function pay(Payment $payment)
+    {
+        $payment->update([
+            'status'  => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Payment successful']);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

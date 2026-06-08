@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Payment extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'reservation_id',
         'payment_option_id',
@@ -17,11 +18,6 @@ class Payment extends Model
         'paid_at',
     ];
 
-    public function paymentOption()
-    {
-        return $this->belongsTo(PaymentOption::class);
-    }
-
     protected $casts = [
         'paid_at' => 'datetime',
     ];
@@ -30,4 +26,9 @@ class Payment extends Model
     {
         return $this->belongsTo(Reservation::class);
     }
+
+    public function paymentOption()
+{
+    return $this->belongsTo(PaymentOption::class);
+}
 }

@@ -1,41 +1,46 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\CourtController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\PaymentOptionController;
 use App\Http\Controllers\Api\WaitingListController;
+use App\Http\Controllers\Api\PaymentOptionController;
 
-// Public routes
+// ── Public routes ──────────────────────────────────────────────────────────────
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login',    [AuthController::class, 'login']);
 
-Route::get('/courts', [CourtController::class, 'index']);
-Route::get('/courts/{court}', [CourtController::class, 'show']);
-Route::get('/courts/{court}/available-slots', [CourtController::class, 'availableSlots']);
+Route::get('/courts',                          [CourtController::class, 'index']);
+Route::get('/courts/{court}',                  [CourtController::class, 'show']);
+Route::get('/courts/{court}/available-slots',  [CourtController::class, 'availableSlots']);
 
-Route::apiResource('reservations', ReservationController::class);
-Route::post('/reservations', [ReservationController::class, 'store']);
+Route::get('/payments-options', [PaymentOptionController::class, 'index']);
+Route::post('/payments', [PaymentController::class, 'store']); 
 
-Route::apiResource('payments', PaymentController::class);
-Route::post('/payments', [PaymentController::class, 'store']);
-
-Route::get('/payment-options', [PaymentOptionController::class, 'index']);
-Route::get('/payment-options/{paymentOption}', [PaymentOptionController::class, 'show']);
-
-
-// Protected routes
+// ── Protected routes ───────────────────────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    // Profile
     Route::get('/profile', [ProfileController::class, 'me']);
     Route::put('/profile', [ProfileController::class, 'updateMe']);
 
+    // Reservations
+    Route::apiResource('reservations', ReservationController::class)
+         ->only(['index', 'show', 'store', 'destroy']);
 
+    // Payments
+    Route::get('/payments',              [PaymentController::class, 'index']);
+    Route::get('/payments/{payment}',    [PaymentController::class, 'show']);
+    Route::post('/payments/{payment}/pay', [PaymentController::class, 'pay']);
+    
 
-    Route::apiResource('waiting-lists', WaitingListController::class);
+    // Waiting lists
+    Route::apiResource('waiting-lists', WaitingListController::class)
+         ->only(['index', 'store', 'destroy']);
 });

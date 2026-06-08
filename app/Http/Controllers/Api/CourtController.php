@@ -9,34 +9,23 @@ use Illuminate\Http\Request;
 
 class CourtController extends Controller
 {
-        public function index()
-        {
-            $courts = Court::with('location')
-                ->where('status', 'active')
-                ->get()
-                ->map(function ($court) {
-                    return [
-                        'id' => $court->id,
-                        'location_id' => $court->location_id,
-                        'court_name' => $court->court_name,
-                        'court_type' => $court->court_type,
-                        'price_per_hour' => $court->price_per_hour,
+    public function index()
+    {
+        $courts = Court::with('location')
+            ->where('status', 'active')
+            ->get();
 
-                        'picture' => $court->picture
-                        ? 'http://10.0.2.2:8000/storage/' . $court->picture
-                        : null,
+        return response()->json([
+            'data' => $courts
+        ]);
+    }
 
-                        'rating' => $court->rating,
-                        'description' => $court->description,
-                        'status' => $court->status,
-                        'location' => $court->location,
-                    ];
-                });
-
-            return response()->json([
-                'data' => $courts
-            ]);
-        }
+    public function show(Court $court)
+    {
+        return response()->json([
+            'data' => $court->load('location')
+        ]);
+    }
 
     public function availableSlots(Court $court, Request $request)
     {
