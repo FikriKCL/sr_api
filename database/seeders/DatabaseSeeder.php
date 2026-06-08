@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             PaymentOptionSeeder::class,
+            UserSeeder::class,
         ]);
 
         Payment::factory(10)->create();
